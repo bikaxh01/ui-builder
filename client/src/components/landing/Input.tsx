@@ -20,7 +20,7 @@ export function VanishInput() {
   const [isloading, setIsLoading] = useState(false);
   const [prompt, setPrompt] = useState<string>("");
   const user = useAuth();
-  const data = useUser()
+  
   const navigate = useNavigate();
   
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {

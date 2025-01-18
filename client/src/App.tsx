@@ -5,6 +5,7 @@ import axios from "axios";
 import PromptPage from "./components/landing/prompt";
 import ConversationPage from "./components/conversationPage";
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
+import Pricing from "./components/pricing/Pricing";
 
 function App() {
   const [data, setData] = useState("");
@@ -24,6 +25,7 @@ function App() {
     <div>
       <Routes>
         <Route path="/" element={<PromptPage />} />
+        <Route path="/pricing" element={<Pricing />} />
         <Route path="generate">
           <Route path=":conversationId" element={<ConversationPage />} />
         </Route>
