@@ -6,13 +6,14 @@ import bodyParser = require("body-parser");
 dotenv.config();
 import cors from "cors";
 import { prismaClient } from "./config/prismaClient";
-
+import crypto from "node:crypto";
 import { chat } from "prisma/prisma-client";
+import axios from "axios";
 
 const app = express();
+//app.use(express.raw({ type: "*/*", limit: "10mb" }));
 app.use(cors());
-app.use(bodyParser());
-
+app.use(express.json());
 app.get("/", async (req: Request, res: Response): Promise<any> => {
   // const response: any = await generateCode(
   //   "Build a fully responsive sidebar  component "
@@ -70,7 +71,7 @@ app.post(
     try {
       const { prompt, userId, conversationId } = req.body;
       let finalPrompt = prompt;
-      
+
       if (!userId || !prompt || !conversationId) {
         return res.json("Invalid request");
       }
@@ -105,13 +106,11 @@ app.post(
         },
         ""
       );
-     
 
-      if(getPreviousChats.length >0 ){
-        finalPrompt = `This is the previous chat of user you can use this as context for  prompt and generate short message ${previousResponses} Current Prompt : ${finalPrompt}`
+      if (getPreviousChats.length > 0) {
+        finalPrompt = `This is the previous chat of user you can use this as context for  prompt and generate short message ${previousResponses} Current Prompt : ${finalPrompt}`;
       }
-       
-       
+
       const response = await generateCode(finalPrompt);
 
       if (!response.content) throw new Error("Error while generating code");
@@ -140,7 +139,6 @@ app.post(
     }
   }
 );
-     
 
 app.post(
   "/webhook-clerk",
@@ -204,6 +202,159 @@ app.post(
     } catch (error) {
       console.log("🚀 ~ error:", error);
       return res.status(500).json("something went wrong");
+    }
+  }
+);
+
+app.post(
+  "/create-payment",
+  async (req: Request, res: Response): Promise<any> => {
+    const { userId, planType } = req.body;
+    console.log("🚀 ~ planType:", planType);
+    console.log("🚀 ~ userId:", userId);
+
+    if (!userId || !planType) {
+      return res.json("invalid request");
+    }
+
+    try {
+      let variantId;
+      const storeId = process.env.STORE_ID;
+      const productId = process.env.PRODUCT_ID;
+      const basicId = process.env.BASIC_ID;
+      const standardId = process.env.STANDARD_ID;
+      const premiumId = process.env.PREMIUM_ID;
+
+      if (!storeId || !productId) throw new Error("invalid store id");
+
+      if (planType == "BASIC" && basicId) {
+        variantId = basicId;
+      } else if (planType == "STANDARD" && standardId) {
+        variantId = standardId;
+      } else if (planType == "PREMIUM" && premiumId) {
+        variantId = premiumId;
+      } else {
+        return res.json("Invalid plan type");
+      }
+
+      const user = await prismaClient.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+
+      if (!user) throw new Error("user not found");
+
+      const response = await axios.post(
+        "https://api.lemonsqueezy.com/v1/checkouts",
+        {
+          data: {
+            type: "checkouts",
+            attributes: {
+              checkout_data: {
+                custom: {
+                  user_id: user.id,
+                  user_email: user.email,
+                  user_firstName: user.firstName,
+                },
+              },
+            },
+
+            relationships: {
+              store: {
+                data: {
+                  type: "stores",
+                  id: storeId,
+                },
+              },
+              variant: {
+                data: {
+                  type: "variants",
+                  id: variantId,
+                },
+              },
+            },
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.API_KEY}`,
+            Accept: "application/vnd.api+json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return res.json({ url: response.data.data.attributes.url });
+    } catch (error: any) {
+      console.log("🚀 ~ error:", error);
+      return res.json("something went wrong");
+    }
+  }
+);
+
+app.post(
+  "/webhook/lemon-squeezy",
+  async (req: Request, res: Response): Promise<any> => {
+    const SECRET = process.env.WEBHOOK_SECRET_LEMON_SQUEEZY;
+
+    try {
+      const body = req.body;
+      const variantId = body.data.attributes.variant_id;
+
+      const { user_id, user_email } = body.meta.custom_data;
+
+      if (!user_id || !variantId) throw new Error("Invalid userID");
+      const Basic_plan = process.env.BASIC_ID;
+      const standard_plan = process.env.STANDARD_ID;
+      const premium_plan = process.env.PREMIUM_ID;
+      let credit;
+      if (variantId == Basic_plan) {
+        credit = 1000;
+      } else if (variantId == standard_plan) {
+        credit = 5000;
+      } else if (variantId == premium_plan) {
+        credit = 10000;
+      } else {
+        throw new Error("invalid variant id");
+      }
+
+      // {
+
+      //   console.log("🚀 ~ SECRET:", SECRET);
+      //   if (!SECRET) throw new Error("invalid");
+
+      //   const hmac = crypto.createHmac("sha256", SECRET);
+
+      //   const digest = Buffer.from(hmac.update(req.body).digest("hex"), "hex");
+
+      //   const signature = Buffer.from(req.get("X-Signature") || "", "hex");
+      //   console.log(crypto.timingSafeEqual(digest, signature));
+
+      //   // Use timingSafeEqual to avoid timing attacks
+      //   if (!crypto.timingSafeEqual(digest, signature)) {
+      //     console.log("Invalid signature.");
+      //     res.status(400).send("Invalid signature.");
+      //     return;
+      //   }
+      // }
+
+      // console.log("🚀 ~ variantId:", typeof variantId);
+
+      const updateUser = await prismaClient.user.update({
+        where: {
+          id: user_id,
+        },
+        data: {
+          credit: {
+            increment: credit,
+          },
+        },
+      });
+
+      res.json("ok");
+    } catch (error) {
+      console.log("🚀 ~ error:", error);
+      return res.json("Error");
     }
   }
 );
