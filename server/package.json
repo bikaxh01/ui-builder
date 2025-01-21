@@ -5,8 +5,8 @@
   "main": "./src/index.ts",
   "scripts": {
     "dev": "nodemon ./src/index.ts",
-    "start": " npm i &&  node dist/index.js",
-    "build": "tsc && npx prisma generate"
+    "start": " node dist/index.js",
+    "build": "npm i && tsc && npx prisma generate"
   },
   "keywords": [],
   "author": "",
