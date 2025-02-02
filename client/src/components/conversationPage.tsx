@@ -22,10 +22,10 @@ export interface MessageType {
 function ConversationPage() {
   const [chat, setChat] = useState<MessageType[]>([]);
   const [componentFiles, setComponentFiles] = useState("");
-
+  const [availableCredit, setAvailableCredit] = useState("00");
   const location = useLocation();
   const initialPrompt = location.state;
-  
+
   const { userId, isLoaded } = useAuth();
   const { conversationId } = useParams();
 
@@ -78,7 +78,13 @@ function ConversationPage() {
           className=" bg-black !h-screen pt-[4%] "
         >
           <ResizablePanel>
-            <ChatComponent  setLoading={setLoading}chat={chat} setChat={setChat} loading={loading} setComponentFiles={setComponentFiles} />
+            <ChatComponent
+              setLoading={setLoading}
+              chat={chat}
+              setChat={setChat}
+              loading={loading}
+              setComponentFiles={setComponentFiles}
+            />
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel>

@@ -84,6 +84,10 @@ app.post(
 
       if (!getUser) throw new Error("Invalid user");
 
+      if (getUser.credit < 4) {
+        return res.json("Insufficient credit");
+      }
+
       const getConversation = await prismaClient.conversation.findUnique({
         where: {
           id: conversationId,
@@ -116,7 +120,16 @@ app.post(
       if (!response.content) throw new Error("Error while generating code");
 
       const parsedResponse: any = JSON.parse(response.content);
-
+      await prismaClient.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          credit: {
+            decrement: 4,
+          },
+        },
+      });
       const saveResponse = await prismaClient.chat.create({
         data: {
           conversationId: conversationId,
@@ -355,6 +368,34 @@ app.post(
     } catch (error) {
       console.log("🚀 ~ error:", error);
       return res.json("Error");
+    }
+  }
+);
+
+app.get(
+  "/get-user-credit/:userId",
+  async (req: Request, res: Response): Promise<any> => {
+    try {
+      const user_Id = req.params["userId"];
+
+      if (!user_Id) {
+        return res.json("Invalid user");
+      }
+
+      const getUser = await prismaClient.user.findUnique({
+        where: {
+          id: user_Id,
+        },
+      });
+
+      return res.json({
+        success: true,
+        message: "successfully fetched",
+        data: getUser?.credit,
+      });
+    } catch (error) {
+      console.log("🚀 ~ app.get ~ error:", error);
+      return res.json("something went wrong");
     }
   }
 );

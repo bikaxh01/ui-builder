@@ -9,6 +9,7 @@ import { BASEURL } from "./landing/Input";
 function ChatComponent({
   chat,
   setChat,
+  
   loading,
   setLoading,
   setComponentFiles,
@@ -16,17 +17,24 @@ function ChatComponent({
   chat: MessageType[];
   setChat: any;
   loading: boolean;
+ 
   setLoading: any;
   setComponentFiles: any;
 }) {
   const [input, setInput] = useState("");
   const { conversationId } = useParams();
   const { userId, isLoaded } = useAuth();
-
+   const availableCredit = localStorage.getItem('user-credit')
   const handleSendMessage = useCallback(async () => {
     if (isLoaded) {
       if (input.trim() === "") return;
       setLoading(true);
+
+      // check credit
+      if (Number(availableCredit) < 4) {
+        return alert("Insufficient credits");
+      }
+
       const newMessage = {
         id: crypto.randomUUID(),
         type: "USER",
@@ -51,6 +59,11 @@ function ChatComponent({
         },
       ]);
       setInput("");
+
+
+      const getCredit = await axios.get(`${BASEURL}get-user-credit/${userId}`);
+      localStorage.setItem("user-credit",getCredit.data.data.toString());
+
       setLoading(false);
     }
   }, [input, userId]);
