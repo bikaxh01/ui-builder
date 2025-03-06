@@ -5,6 +5,7 @@ import axios from "axios";
 import { BASEURL } from "../landing/Input";
 import { useAuth } from "@clerk/clerk-react";
 import { redirect } from "react-router";
+import { toast } from "sonner";
 
 export const PricingDetail = [
   {
@@ -48,20 +49,21 @@ export function PricingCard({
   const { userId } = useAuth();
 
   const handleSubmit = async () => {
-    if (!useAuth) return alert("Sign in please");
+    if (!useAuth) return toast.error("Sign in please");
+
     try {
-      setLoading(true)
+      setLoading(true);
       const response = await axios.post(`${BASEURL}create-payment`, {
         userId: userId,
         planType: plainType.toUpperCase(),
       });
 
       const url = await response.data.url;
-      window.location.href=url;
+      window.location.href = url;
     } catch (error) {
-      alert("something went wrong");
-    } finally{
-      setLoading(false)
+      toast.info("something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
   return (

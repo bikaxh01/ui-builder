@@ -3,6 +3,7 @@ import { PlaceholdersAndVanishInput } from "../common/ui/Vanish-Input";
 import { Navigate, redirect, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth, useUser } from "@clerk/clerk-react";
+import { toast } from "sonner";
 export const BASEURL = import.meta.env.VITE_SERVER_BASE_URL;
 const placeholders = [
   "Design a responsive navbar with dropdown menus",
@@ -28,9 +29,10 @@ export function VanishInput() {
   };
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
      if(!user.userId){
-      alert("please signIn")
+      toast.error("please signIn")
       return
      }
+    
 
     if (prompt) {
       setIsLoading(true)
@@ -40,6 +42,7 @@ export function VanishInput() {
       const conversation = await response.data.data
       navigate(`generate/${conversation.id}`,{state:prompt});
       setIsLoading(false)
+
     }
     e.preventDefault();
   };

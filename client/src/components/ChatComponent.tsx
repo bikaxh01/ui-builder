@@ -6,6 +6,7 @@ import { redirect, useNavigate, useParams } from "react-router";
 import { RedirectToSignIn, SignedOut, useAuth } from "@clerk/clerk-react";
 import axios from "axios";
 import { BASEURL } from "./landing/Input";
+import { toast } from "sonner";
 function ChatComponent({
   chat,
   setChat,
@@ -32,7 +33,7 @@ function ChatComponent({
 
       // check credit
       if (Number(availableCredit) < 4) {
-        return alert("Insufficient credits");
+        return toast.info("Insufficient credits")
       }
 
       const newMessage = {

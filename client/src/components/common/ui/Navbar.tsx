@@ -11,6 +11,7 @@ import { Coins, User } from "lucide-react";
 import { useEffect } from "react";
 import axios from "axios";
 import { BASEURL } from "@/components/landing/Input";
+import { toast } from "sonner";
 const Navbar = () => {
   const user = useAuth();
   const isSignedIn = user.isSignedIn;
@@ -19,6 +20,9 @@ const Navbar = () => {
 
   useEffect(() => {
     if (isSignedIn) {
+      if(user.userId){
+        toast.success("successfully sigIn")
+       }
       async function getCredit() {
         try {
           const res = await axios.get(

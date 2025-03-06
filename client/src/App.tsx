@@ -6,6 +6,7 @@ import PromptPage from "./components/landing/prompt";
 import ConversationPage from "./components/conversationPage";
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
 import Pricing from "./components/pricing/Pricing";
+import { Toaster } from 'sonner'
 
 function App() {
   const [data, setData] = useState("");
@@ -23,6 +24,7 @@ function App() {
 
   return (
     <div>
+      <Toaster  richColors/>
       <Routes>
         <Route path="/" element={<PromptPage />} />
         <Route path="/pricing" element={<Pricing />} />
